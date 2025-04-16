@@ -463,7 +463,7 @@
                 const token_price = market_cap / totalTokenSupply;
                 const allocation_value = your_PORTALS * token_price;
                 results.push({
-                    "Market Cap": market_cap,
+                    "FDV": market_cap,
                     "Token Price": token_price,
                     "Your Allocation Value": allocation_value
                 });
@@ -481,14 +481,14 @@
 
             let output = `
                 <strong>Your Allocation from Chrono:</strong> ${your_PORTALS_from_chrono.toLocaleString()} $PORTALS<br><br>
-                <strong>Market Cap Analysis:</strong><br>
+                <strong>FDV Analysis:</strong><br>
             `;
             marketCaps.forEach((market_cap, index) => {
                 const token_price = market_cap / totalTokenSupply;
                 const allocation_value = your_PORTALS_from_chrono * token_price;
                 output += `
                     <div class="market-cap-card">
-                        <strong>Market Cap: $${market_cap.toLocaleString()}</strong>
+                        <strong>FDV: $${market_cap.toLocaleString()}</strong>
                         <span>Token Price: $${token_price.toFixed(2)}</span>
                         <span>Your Allocation Value: $${allocation_value.toLocaleString()}</span>
                     </div>
@@ -515,14 +515,14 @@
                 <strong>Your Allocation:</strong> ${your_PORTALS.toLocaleString()} $PORTALS<br>
                 - From Points: ${your_PORTALS_from_points.toLocaleString()} $PORTALS<br>
                 - From NFTs: ${your_PORTALS_from_nfts.toLocaleString()} $PORTALS<br><br>
-                <strong>Market Cap Analysis:</strong><br>
+                <strong>FDV Analysis:</strong><br>
             `;
             marketCaps.forEach((market_cap, index) => {
                 const token_price = market_cap / totalTokenSupply;
                 const allocation_value = your_PORTALS * token_price;
                 output += `
                     <div class="market-cap-card">
-                        <strong>Market Cap: $${market_cap.toLocaleString()}</strong>
+                        <strong>FDV: $${market_cap.toLocaleString()}</strong>
                         <span>Token Price: $${token_price.toFixed(2)}</span>
                         <span>Your Allocation Value: $${allocation_value.toLocaleString()}</span>
                     </div>
