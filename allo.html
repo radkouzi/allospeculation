@@ -1,0 +1,536 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row =>
+                    row.some(cell => cell !== '' && cell !== null && cell !== undefined)
+                );
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Allocation Calculator</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background-image: url('https://sdmntpritalynorth.oaiusercontent.com/files/00000000-6854-6246-9049-4f04d2e97fe5/raw?se=2025-04-16T22%3A14%3A58Z&sp=r&sv=2024-08-04&sr=b&scid=4cc0a4f3-e29d-5809-a96a-3e9351ebc854&skoid=9370dd2b-ca43-4270-bed5-18b1b71f8fa0&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-04-16T05%3A33%3A32Z&ske=2025-04-17T05%3A33%3A32Z&sks=b&skv=2024-08-04&sig=QlwkXuOwXSxZeJHIdbI0uifA5Hwq0N1Qti3p/JsSCEI%3D');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .welcome-screen {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: #fff;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid #00ccff;
+        }
+        .welcome-screen h2 {
+            margin-top: 0;
+            color: #00ccff;
+            font-size: 1.8em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .welcome-screen select, .welcome-screen input, .welcome-screen button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #222;
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        .welcome-screen select:focus, .welcome-screen input:focus {
+            outline: none;
+            border-color: #00ccff;
+            box-shadow: 0 0 10px #00ccff;
+        }
+        .welcome-screen button {
+            background: linear-gradient(90deg, #00ccff, #0099ff);
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .welcome-screen button:hover {
+            background: linear-gradient(90deg, #0099ff, #0077cc);
+        }
+        .calculator-container {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1200px;
+            padding: 20px;
+        }
+        .calculator {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            color: #fff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .calculator:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0, 204, 255, 0.3);
+        }
+        .calculator h3 {
+            margin-top: 0;
+            font-size: 1.8em;
+            color: #00ccff;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        .input-group label {
+            display: block;
+            font-size: 1em;
+            margin-bottom: 8px;
+            color: #ddd;
+            font-weight: 500;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #222;
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #00ccff;
+            box-shadow: 0 0 10px #00ccff;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background: linear-gradient(135deg, #333, #444);
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .slider-container {
+            position: relative;
+            padding: 0;
+            background: #444;
+            border-radius: 8px;
+            height: 10px;
+            margin: 70px 0 10px 0;
+        }
+        .slider-container label {
+            position: absolute;
+            top: -80px;
+            left: 0;
+            color: #ddd;
+            font-weight: 500;
+        }
+        .slider-container .slider-text-container {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            top: -20px;
+            left: 0;
+            width: 100%;
+            padding: 0 5px;
+        }
+        .slider-container input[type="range"] {
+            width: 100%;
+            height: 10px;
+            margin: 0;
+            padding: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            outline: none;
+        }
+        .slider-container input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(to right, #00ccff 0%, #00ccff 50%, #444 50%, #444 100%);
+            border-radius: 8px;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00ccff;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px #00ccff;
+            transition: transform 0.2s;
+            margin-top: -5px;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .slider-container input[type="range"] {
+            --slider-value: 50%;
+        }
+        .slider-container input[type="range"]::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #00ccff 0%, #00ccff var(--slider-value, 50%), #444 var(--slider-value, 50%), #444 100%);
+        }
+        .slider-container #nftAllocation {
+            font-size: 1em;
+            color: #00ccff;
+            font-weight: 600;
+        }
+        .slider-container #pointsAllocation {
+            font-size: 1em;
+            color: #00ccff;
+            font-weight: 600;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #00ccff, #0099ff);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #0099ff, #0077cc);
+            transform: translateY(-2px);
+        }
+        #result-chrono, #result-nft {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        .market-cap-card {
+            background: linear-gradient(135deg, #222, #333);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #00ccff;
+            box-shadow: 0 4px 12px rgba(0, 204, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        .market-cap-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 204, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 5s infinite;
+        }
+        .market-cap-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 16px rgba(0, 204, 255, 0.2);
+        }
+        .market-cap-card strong {
+            color: #00ccff;
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .market-cap-card span {
+            color: #ddd;
+            font-size: 0.9em;
+            display: block;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0); }
+            50% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+        #initial-error {
+            color: #ff4444;
+            display: none;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            padding: 5px;
+            background: rgba(255, 68, 68, 0.1);
+            border-radius: 4px;
+        }
+        @media (max-width: 768px) {
+            .calculator-container {
+                grid-template-columns: 1fr;
+            }
+            .calculator {
+                width: 100%;
+            }
+            .welcome-screen {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-screen" id="welcome-screen">
+        <h2>Welcome</h2>
+        <select id="allocation-type">
+            <option value="chrono">Check Allocation for Chrono Burns</option>
+            <option value="nft">Check Allocation for NFTs/Points</option>
+        </select>
+        <input type="number" id="chosen-percentage" placeholder="Enter percentage (e.g., 10)" min="0" max="12">
+        <button onclick="startCalculation()">Start</button>
+    </div>
+    <div class="calculator-container" id="calculator-container">
+        <div class="calculator" id="chrono-calculator" style="display: none;">
+            <h3>Chrono Burn Calculator</h3>
+            <div class="input-group">
+                <label for="userChronoBurned">How much $CHRONO did you burn?</label>
+                <input type="number" id="userChronoBurned" placeholder="e.g., 1400000" min="0">
+            </div>
+            <button onclick="calculateChrono()">Calculate</button>
+            <div id="result-chrono"></div>
+        </div>
+        <div class="calculator" id="nft-points-calculator" style="display: none;">
+            <h3>NFT/Points Calculator</h3>
+            <div class="input-group">
+                <label for="pointsHeld">Points Held:</label>
+                <input type="number" id="pointsHeld" placeholder="e.g., 0" min="0">
+            </div>
+            <div class="input-group">
+                <label for="totalPointsSupply">Total Points Supply: 
+                    <span class="tooltip">ⓘ
+                        <span class="tooltiptext">Total Points will get updated every 24 hours</span>
+                    </span>
+                </label>
+                <input type="number" id="totalPointsSupply" value="3795006941.19" readonly>
+            </div>
+            <div class="input-group">
+                <label>Allocation Split:</label>
+                <div class="slider-container">
+                    <div class="slider-text-container">
+                        <span id="nftAllocation">NFT Allocation 50%</span>
+                        <span id="pointsAllocation">Points Allocation 50%</span>
+                    </div>
+                    <input type="range" id="nftSplitPercentage" min="0" max="100" value="50" oninput="updateSliderLabels(); updateSliderTrack()">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>NFT Tiers:</label>
+                <input type="number" id="explorers" placeholder="Explorers" min="0"><br>
+                <input type="number" id="collectors" placeholder="Collectors" min="0"><br>
+                <input type="number" id="striders" placeholder="Striders" min="0"><br>
+                <input type="number" id="operators" placeholder="Operators" min="0">
+            </div>
+            <button onclick="calculateNFTPoints()">Calculate</button>
+            <div id="result-nft"></div>
+        </div>
+    </div>
+    <script>
+        const totalTokenSupply = 1000000000;
+        const totalChronoBurned = 13581504;
+        const marketCaps = [100000000, 250000000, 500000000, 1000000000, 10000000000, 40000000000];
+        let chronoBurnerPercentage = 0;
+        let ogPercentage = 0;
+        let nftPointsPercentage = 0;
+
+        function startCalculation() {
+            const allocationType = document.getElementById('allocation-type').value;
+            const chosenPercentage = parseFloat(document.getElementById('chosen-percentage').value) || 0;
+
+            if (chosenPercentage > 12 || chosenPercentage < 0) {
+                alert("Please enter a percentage between 0 and 12.");
+                return;
+            }
+
+            const remainingPercentage = 12 - chosenPercentage;
+            chronoBurnerPercentage = remainingPercentage / 2;
+            ogPercentage = remainingPercentage / 2;
+            if (allocationType === 'chrono') {
+                chronoBurnerPercentage = chosenPercentage;
+                ogPercentage = 0;
+                nftPointsPercentage = 0;
+            } else { // nft
+                nftPointsPercentage = chosenPercentage;
+                chronoBurnerPercentage = 0;
+                ogPercentage = 0;
+            }
+
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('calculator-container').style.display = 'grid';
+            if (allocationType === 'chrono') {
+                document.getElementById('chrono-calculator').style.display = 'block';
+            } else {
+                document.getElementById('nft-points-calculator').style.display = 'block';
+            }
+        }
+
+        function updateSliderLabels() {
+            const slider = document.getElementById('nftSplitPercentage');
+            const nftValue = slider.value;
+            const pointsValue = 100 - nftValue;
+            document.getElementById('nftAllocation').textContent = `NFT Allocation ${nftValue}%`;
+            document.getElementById('pointsAllocation').textContent = `Points Allocation ${pointsValue}%`;
+        }
+
+        function updateSliderTrack() {
+            const slider = document.getElementById('nftSplitPercentage');
+            const value = slider.value;
+            slider.style.setProperty('--slider-value', `${value}%`);
+        }
+
+        function calculate_allocation(points_held, total_points_supply, og_percentage, chrono_burner_percentage, nft_split_percentage, nft_tiers, user_chrono_burned) {
+            const airdrop_percentage = 12;
+            const og_supply = totalTokenSupply * (og_percentage / 100);
+            const chrono_supply = totalTokenSupply * (chrono_burner_percentage / 100);
+            const nft_points_supply = totalTokenSupply * (nftPointsPercentage / 100);
+
+            const chrono_share = user_chrono_burned / totalChronoBurned || 0;
+            const your_PORTALS_from_chrono = chrono_supply * chrono_share;
+
+            const nft_airdrop_supply = nft_points_supply * (nft_split_percentage / 100);
+            const points_airdrop_supply = nft_points_supply * (1 - nft_split_percentage / 100);
+
+            const points_share = points_held / total_points_supply || 0;
+            const your_PORTALS_from_points = points_airdrop_supply * points_share;
+
+            const total_nft_weight = 1 * 10000 + 10 * 4500 + 100 * 425 + 600 * 75;
+            const user_nft_weight = 1 * nft_tiers.explorers + 10 * nft_tiers.collectors + 100 * nft_tiers.striders + 600 * nft_tiers.operators;
+            const nft_share = user_nft_weight / total_nft_weight || 0;
+            const your_PORTALS_from_nfts = nft_airdrop_supply * nft_share;
+
+            const your_PORTALS = your_PORTALS_from_points + your_PORTALS_from_nfts + your_PORTALS_from_chrono;
+
+            const results = [];
+            for (let market_cap of marketCaps) {
+                const token_price = market_cap / totalTokenSupply;
+                const allocation_value = your_PORTALS * token_price;
+                results.push({
+                    "Market Cap": market_cap,
+                    "Token Price": token_price,
+                    "Your Allocation Value": allocation_value
+                });
+            }
+
+            return { your_PORTALS, your_PORTALS_from_points, your_PORTALS_from_nfts, your_PORTALS_from_chrono, results };
+        }
+
+        function calculateChrono() {
+            const user_chrono_burned = parseFloat(document.getElementById('userChronoBurned').value) || 0;
+
+            const chrono_supply = totalTokenSupply * (chronoBurnerPercentage / 100);
+            const chrono_share = user_chrono_burned / totalChronoBurned;
+            const your_PORTALS_from_chrono = chrono_supply * chrono_share;
+
+            let output = `
+                <strong>Your Allocation from Chrono:</strong> ${your_PORTALS_from_chrono.toLocaleString()} $PORTALS<br><br>
+                <strong>Market Cap Analysis:</strong><br>
+            `;
+            marketCaps.forEach((market_cap, index) => {
+                const token_price = market_cap / totalTokenSupply;
+                const allocation_value = your_PORTALS_from_chrono * token_price;
+                output += `
+                    <div class="market-cap-card">
+                        <strong>Market Cap: $${market_cap.toLocaleString()}</strong>
+                        <span>Token Price: $${token_price.toFixed(2)}</span>
+                        <span>Your Allocation Value: $${allocation_value.toLocaleString()}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('result-chrono').innerHTML = output;
+        }
+
+        function calculateNFTPoints() {
+            const points_held = parseFloat(document.getElementById('pointsHeld').value) || 0;
+            const total_points_supply = parseFloat(document.getElementById('totalPointsSupply').value) || 3795006941.19;
+            const nft_split_percentage = parseFloat(document.getElementById('nftSplitPercentage').value) || 50;
+            const nft_tiers = {
+                explorers: parseInt(document.getElementById('explorers').value) || 0,
+                collectors: parseInt(document.getElementById('collectors').value) || 0,
+                striders: parseInt(document.getElementById('striders').value) || 0,
+                operators: parseInt(document.getElementById('operators').value) || 0
+            };
+
+            const { your_PORTALS, your_PORTALS_from_points, your_PORTALS_from_nfts, your_PORTALS_from_chrono, results } = calculate_allocation(points_held, total_points_supply, ogPercentage, 0, nft_split_percentage, nft_tiers, 0);
+
+            let output = `
+                <strong>Your Allocation:</strong> ${your_PORTALS.toLocaleString()} $PORTALS<br>
+                - From Points: ${your_PORTALS_from_points.toLocaleString()} $PORTALS<br>
+                - From NFTs: ${your_PORTALS_from_nfts.toLocaleString()} $PORTALS<br><br>
+                <strong>Market Cap Analysis:</strong><br>
+            `;
+            marketCaps.forEach((market_cap, index) => {
+                const token_price = market_cap / totalTokenSupply;
+                const allocation_value = your_PORTALS * token_price;
+                output += `
+                    <div class="market-cap-card">
+                        <strong>Market Cap: $${market_cap.toLocaleString()}</strong>
+                        <span>Token Price: $${token_price.toFixed(2)}</span>
+                        <span>Your Allocation Value: $${allocation_value.toLocaleString()}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('result-nft').innerHTML = output;
+        }
+    </script>
+</body>
+</html>
